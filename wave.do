@@ -21,11 +21,16 @@ add wave -noupdate -expand -group Memory /mymips_min_sopc_tb/mymips_min_sopc0/my
 add wave -noupdate -expand -group {Write Back} /mymips_min_sopc_tb/mymips_min_sopc0/mymips0/mem_wb0/wb_wdata
 add wave -noupdate -expand -group {Write Back} /mymips_min_sopc_tb/mymips_min_sopc0/mymips0/mem_wb0/wb_wd
 add wave -noupdate -expand -group {Write Back} /mymips_min_sopc_tb/mymips_min_sopc0/mymips0/mem_wb0/wb_wreg
+add wave -noupdate {/mymips_min_sopc_tb/mymips_min_sopc0/mymips0/regfile1/regs[0]}
+add wave -noupdate {/mymips_min_sopc_tb/mymips_min_sopc0/mymips0/regfile1/regs[1]}
+add wave -noupdate {/mymips_min_sopc_tb/mymips_min_sopc0/mymips0/regfile1/regs[2]}
+add wave -noupdate {/mymips_min_sopc_tb/mymips_min_sopc0/mymips0/regfile1/regs[3]}
+add wave -noupdate {/mymips_min_sopc_tb/mymips_min_sopc0/mymips0/regfile1/regs[4]}
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {256088 ps} 0}
+WaveRestoreCursors {{Cursor 1} {274152 ps} 0}
 quietly wave cursor active 1
-configure wave -namecolwidth 218
-configure wave -valuecolwidth 109
+configure wave -namecolwidth 215
+configure wave -valuecolwidth 114
 configure wave -justifyvalue left
 configure wave -signalnamewidth 2
 configure wave -snapdistance 10
@@ -38,5 +43,5 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ps
 update
-WaveRestoreZoom {1063135 ps} {1201941 ps}
+WaveRestoreZoom {190925 ps} {326903 ps}
 bookmark add wave bookmark2 {{0 ps} {138806 ps}} 8
