@@ -133,6 +133,64 @@ module id (
                                     reg2_read_o <= 1'b1;
                                     instvalid   <= `InstValid;
                                 end
+                                `EXE_MFHI: begin 
+                                    wreg_o      <= `WriteEnable;
+                                    aluop_o     <= `EXE_MFHI_OP;
+                                    alusel_o    <= `EXE_RES_MOVE;
+                                    reg1_read_o <= 1'b0;
+                                    reg2_read_o <= 1'b0;
+                                    instvalid   <= `InstValid;
+                                end
+                                `EXE_MFLO: begin 
+                                    wreg_o      <= `WriteEnable;
+                                    aluop_o     <= `EXE_MFLO_OP;
+                                    alusel_o    <= `EXE_RES_MOVE;
+                                    reg1_read_o <= 1'b0;
+                                    reg2_read_o <= 1'b0;
+                                    instvalid   <= `InstValid;
+                                end
+                                `EXE_MTHI: begin 
+                                    wreg_o      <= `WriteDisable;
+                                    aluop_o     <= `EXE_MTHI_OP;
+                                    // alusel_o    <= `EXE_RES_MOVE; // 为啥没有？？
+                                    reg1_read_o <= 1'b1;
+                                    reg2_read_o <= 1'b0;
+                                    instvalid   <= `InstValid;
+                                end
+                                `EXE_MTLO: begin 
+                                    wreg_o      <= `WriteDisable;
+                                    aluop_o     <= `EXE_MTLO_OP;
+                                    // alusel_o    <= `EXE_RES_MOVE;
+                                    reg1_read_o <= 1'b1;
+                                    reg2_read_o <= 1'b0;
+                                    instvalid   <= `InstValid;
+                                end
+                                `EXE_MOVN: begin 
+                                    // wreg_o      <= `WriteEnable;
+                                    aluop_o     <= `EXE_MOVN_OP;
+                                    alusel_o    <= `EXE_RES_MOVE;
+                                    reg1_read_o <= 1'b1;
+                                    reg2_read_o <= 1'b1;
+                                    instvalid   <= `InstValid;
+                                    if (reg2_o != `ZeroWord) begin
+                                        wreg_o  <= `WriteEnable;
+                                    end else begin 
+                                        wreg_o  <= `WriteDisable;
+                                    end
+                                end
+                                `EXE_MOVN: begin 
+                                    // wreg_o      <= `WriteEnable;
+                                    aluop_o     <= `EXE_MOVZ_OP;
+                                    alusel_o    <= `EXE_RES_MOVE;
+                                    reg1_read_o <= 1'b1;
+                                    reg2_read_o <= 1'b1;
+                                    instvalid   <= `InstValid;
+                                    if (reg2_o == `ZeroWord) begin
+                                        wreg_o  <= `WriteEnable;
+                                    end else begin 
+                                        wreg_o  <= `WriteDisable;
+                                    end
+                                end
                                 default: begin 
                                 end
                             endcase // case op3
@@ -201,7 +259,7 @@ module id (
                     reg1_read_o <= 1'b0;
                     reg2_read_o <= 1'b1;
                     imm[4:0]    <= inst_i[10:6];
-                    wd_o        <= inst_i[15:11]; // 是否有必要在这里赋值？
+                    // wd_o        <= inst_i[15:11]; // 是否有必要在这里赋值？
                     instvalid   <= `InstValid;
                 end else if (op3 == `EXE_SRL) begin
                     wreg_o      <= `WriteEnable;
@@ -210,7 +268,7 @@ module id (
                     reg1_read_o <= 1'b0;
                     reg2_read_o <= 1'b1;
                     imm[4:0]    <= inst_i[10:6];
-                    wd_o        <= inst_i[15:11];
+                    // wd_o        <= inst_i[15:11];
                     instvalid   <= `InstValid;
                 end else if (op3 == `EXE_SRA) begin
                     wreg_o      <= `WriteEnable;
@@ -219,7 +277,7 @@ module id (
                     reg1_read_o <= 1'b0;
                     reg2_read_o <= 1'b1;
                     imm[4:0]    <= inst_i[10:6];
-                    wd_o        <= inst_i[15:11];
+                    // wd_o        <= inst_i[15:11];
                     instvalid   <= `InstValid;
                 end
             end // if
