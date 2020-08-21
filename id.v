@@ -157,16 +157,27 @@ module id (
                             end
                         end
                         `RV_ADD_OR_SUB: begin 
-                            if (inst_i[30] == 1'b0) begin // ADD
+                            if (inst_i[31:25] == 7'b0000000) begin // ADD
                                 aluop_o     <=  `EXE_ADD_OP;
                                 alusel_o    <=  `EXE_RES_ARITHMETIC;
-                            end else if (inst_i[30] == 1'b1) begin // SUB
+                            end else if (inst_i[31:25] == 7'b0100000) begin // SUB
                                 aluop_o     <=  `EXE_SUB_OP;
                                 alusel_o    <=  `EXE_RES_ARITHMETIC;
                             end
                         end
                         default : /* default */;
-                    endcase
+                    endcase // case funct3
+                    if (inst_i[31:25] == 7'b0000001) begin      // RV32M 扩展：乘法指令
+                        if (funct3 == 3'b000) begin
+                            aluop_o     <= `EXE_MUL_OP;
+                            alusel_o    <= `EXE_RES_MUL;
+                        end else if (funct3 == 3'b001) begin
+                            aluop_o     <= `EXE_MULH_OP;
+                            alusel_o    <= `EXE_RES_MULH;
+                        end else if (funct3 == 3'b010) begin
+                            /* code */
+                        end
+                    end
                 end
                 `RV_OP_LUI: begin // LUI 指令
                     wreg_o      <=  `WriteEnable;
