@@ -25,6 +25,19 @@
 `define ChipEnable 1'b1
 `define ChipDisable 1'b0
 
+// RISC-V
+`define RV_OP_IMM 7'b0010011
+`define RV_OP 7'b0110011
+`define RV_OP_LUI 7'b0110111
+`define RV_OP_AUIPC 7'b0010111
+`define RV_ADD_OR_SUB 3'b000
+`define RV_SLL 3'b001
+`define RV_SLT 3'b010
+`define RV_SLTU 3'b011
+`define RV_XOR 3'b100
+`define RV_SRL_OR_SRA 3'b101
+`define RV_OR 3'b110
+`define RV_AND 3'b111
 
 //指令
 `define EXE_AND  6'b100100
@@ -100,12 +113,35 @@
 `define EXE_MFLO_OP  8'b00010010
 `define EXE_MTLO_OP  8'b00010011
 
+`define EXE_SLT_OP  8'b00101010
+`define EXE_SLTU_OP  8'b00101011
+`define EXE_SLTI_OP  8'b01010111
+`define EXE_SLTIU_OP  8'b01011000   
+`define EXE_ADD_OP  8'b00100000
+`define EXE_ADDU_OP  8'b00100001
+`define EXE_SUB_OP  8'b00100010
+`define EXE_SUBU_OP  8'b00100011
+`define EXE_ADDI_OP  8'b01010101
+`define EXE_ADDIU_OP  8'b01010110
+`define EXE_CLZ_OP  8'b10110000
+`define EXE_CLO_OP  8'b10110001
+
+`define EXE_MULT_OP  8'b00011000
+`define EXE_MULTU_OP  8'b00011001
+`define EXE_MUL_OP  8'b10101001
+`define EXE_MADD_OP  8'b10100110
+`define EXE_MADDU_OP  8'b10101000
+`define EXE_MSUB_OP  8'b10101010
+`define EXE_MSUBU_OP  8'b10101011
+
 `define EXE_NOP_OP    8'b00000000
 
 //AluSel
 `define EXE_RES_LOGIC 3'b001
 `define EXE_RES_SHIFT 3'b010
 `define EXE_RES_MOVE 3'b011	
+`define EXE_RES_ARITHMETIC 3'b100	
+`define EXE_RES_MUL 3'b101
 
 `define EXE_RES_NOP 3'b000
 

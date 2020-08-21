@@ -68,6 +68,9 @@ module ex (
                 `EXE_XOR_OP: begin 
                     logicout <= reg1_i ^ reg2_i;
                 end
+                `EXE_LUI_OP: begin 
+                    logicout <= reg1_i;
+                end
                 default : begin 
                     logicout <= `ZeroWord;
                 end
@@ -82,13 +85,13 @@ module ex (
         end else begin 
             case (aluop_i)
                 `EXE_SLL_OP: begin 
-                    shiftres    <= reg2_i << reg1_i[4:0];
+                    shiftres    <= reg1_i << reg2_i[4:0];
                 end
                 `EXE_SRL_OP: begin 
-                    shiftres    <= reg2_i >> reg1_i[4:0];
+                    shiftres    <= reg1_i >> reg2_i[4:0];
                 end
                 `EXE_SRA_OP: begin 
-                    shiftres    <= ({32{reg2_i[31]}} << (6'd32-{1'b0, reg1_i[4:0]})) | reg2_i >> reg1_i[4:0];
+                    shiftres    <= ({32{reg1_i[31]}} << (6'd32-{1'b0, reg2_i[4:0]})) | reg1_i >> reg2_i[4:0];
                 end
                 default : begin 
                     shiftres    <= `ZeroWord;
@@ -147,7 +150,7 @@ module ex (
 
     // 判断溢出
     // 溢出情况两种：1 正数之和结果为负数；2 负数之和结果为正数
-    assign ov_sum = (reg1_i[31] && reg2_i_mux[31] && !result_sum[31]) || (!reg1_i[31] && !reg2_i_mux[31] && result_sum[31])
+    assign ov_sum = (reg1_i[31] && reg2_i_mux[31] && !result_sum[31]) || (!reg1_i[31] && !reg2_i_mux[31] && result_sum[31]);
 
     // little than??? 这个地方是不是不对（质疑）
     assign reg1_lt_reg2 = (aluop_i == `EXE_SLT_OP) ? 
