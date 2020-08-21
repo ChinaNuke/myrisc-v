@@ -12,14 +12,15 @@ module ex (
 
     output reg[`RegAddrBus]     wd_o,
     output reg                  wreg_o,
-    output reg[`RegBus]         wdata_o
+    output reg[`RegBus]         wdata_o,
+
+    output reg                  stallreq
 );
 
     reg[`RegBus] logicout;      // 逻辑运算结果
     reg[`RegBus] shiftres;      // 移位运算结果
     reg[`RegBus] arithmeticres; // 算术运算结果
 
-    wire                ov_sum;         // 溢出标志
     wire                reg1_eq_reg2;
     wire                reg1_lt_reg2;
     wire[`RegBus]       reg2_i_mux;     // reg2 的补码

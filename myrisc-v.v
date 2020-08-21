@@ -21,6 +21,7 @@ module mymips (
     wire[`RegBus]           id_reg2_o;
     wire                    id_wreg_o;
     wire[`RegAddrBus]       id_wd_o;
+    wire                    id_stall_o;
 
     // ID/EX --- EX
     wire[`AluOpBus]         ex_aluop_i;
@@ -58,15 +59,21 @@ module mymips (
     wire[`RegAddrBus]       reg1_addr;
     wire[`RegAddrBus]       reg2_addr;
 
+    wire[5:0]               stall;
+    wire                    stallreq_from_id;
+    wire                    stallreq_from_ex;
+
     pc_reg pc_reg0(
-        .clk(clk), .rst(rst), .pc(pc), .ce(rom_ce_o)
+        .clk(clk), .rst(rst), .pc(pc), .ce(rom_ce_o),
+        .stall(stall)
     );
 
     assign rom_addr_o = pc;
 
     if_id if_id0(
         .clk(clk), .rst(rst), .if_pc(pc), .if_inst(rom_data_i),
-        .id_pc(id_pc_i), .id_inst(id_inst_i)
+        .id_pc(id_pc_i), .id_inst(id_inst_i),
+        .stall(stall)
     );
 
     id id0(
@@ -85,7 +92,9 @@ module mymips (
 
         .aluop_o(id_aluop_o), .alusel_o(id_alusel_o),
         .reg1_o(id_reg1_o), .reg2_o(id_reg2_o),
-        .wd_o(id_wd_o), .wreg_o(id_wreg_o)
+        .wd_o(id_wd_o), .wreg_o(id_wreg_o),
+
+        .stallreq(stallreq_from_id)
     );
 
     regfile regfile1(
@@ -99,6 +108,7 @@ module mymips (
 
     id_ex id_ex0(
         .clk(clk), .rst(rst),
+        .stall(stall),
         .id_aluop(id_aluop_o), .id_alusel(id_alusel_o),
         .id_reg1(id_reg1_o), .id_reg2(id_reg2_o),
         .id_wd(id_wd_o), .id_wreg(id_wreg_o),
@@ -115,11 +125,15 @@ module mymips (
         .reg1_i(ex_reg1_i), .reg2_i(ex_reg2_i),
         .wd_i(ex_wd_i), .wreg_i(ex_wreg_i),
 
-        .wd_o(ex_wd_o), .wreg_o(ex_wreg_o), .wdata_o(ex_wdata_o)
+        .wd_o(ex_wd_o), .wreg_o(ex_wreg_o), .wdata_o(ex_wdata_o),
+
+        .stallreq(stallreq_from_ex)
     );
 
     ex_mem ex_mem0(
         .clk(clk), .rst(rst),
+
+        .stall(stall),
 
         .ex_wdata(ex_wdata_o), .ex_wd(ex_wd_o), .ex_wreg(ex_wreg_o),
 
@@ -137,9 +151,19 @@ module mymips (
     mem_wb mem_wb0(
         .clk(clk), .rst(rst),
 
+        .stall(stall),
+
         .mem_wdata(mem_wdata_o), .mem_wd(mem_wd_o), .mem_wreg(mem_wreg_o),
 
         .wb_wdata(wb_wdata_i), .wb_wd(wb_wd_i), .wb_wreg(wb_wreg_i)
+    );
+
+    ctrl ctrl0(
+        .rst(rst),
+
+        .stallreq_from_id(stallreq_from_id), .stallreq_from_ex(stallreq_from_ex),
+
+        .stall(stall)
     );
     
 endmodule

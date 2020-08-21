@@ -28,7 +28,8 @@ module id (
     output reg[`RegBus]        reg1_o,
     output reg[`RegBus]        reg2_o,
     output reg[`RegAddrBus]    wd_o,
-    output reg                 wreg_o
+    output reg                 wreg_o,
+    output wire                stallreq     // 占坑
 );
 
     wire[6:0] opcode = inst_i[6:0];
@@ -157,17 +158,17 @@ module id (
                             end
                         end
                         `RV_ADD_OR_SUB: begin 
-                            if (inst_i[31:25] == 7'b0000000) begin // ADD
+                            if (funct7 == 7'b0000000) begin // ADD
                                 aluop_o     <=  `EXE_ADD_OP;
                                 alusel_o    <=  `EXE_RES_ARITHMETIC;
-                            end else if (inst_i[31:25] == 7'b0100000) begin // SUB
+                            end else if (funct7 == 7'b0100000) begin // SUB
                                 aluop_o     <=  `EXE_SUB_OP;
                                 alusel_o    <=  `EXE_RES_ARITHMETIC;
                             end
                         end
                         default : /* default */;
                     endcase // case funct3
-                    if (inst_i[31:25] == 7'b0000001) begin      // RV32M 扩展：乘法指令
+                    if (funct7 == 7'b0000001) begin      // RV32M 扩展：乘法指令
                         if (funct3 == 3'b000) begin
                             aluop_o     <= `EXE_MUL_OP;
                             alusel_o    <= `EXE_RES_MUL;

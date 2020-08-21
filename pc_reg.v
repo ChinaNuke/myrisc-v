@@ -3,7 +3,13 @@
 module pc_reg(
     input wire clk,
     input wire rst,
-    output reg[`InstAddrBus] pc,
+
+    input wire[5:0] stall,
+
+    // input wire                  branch_flag_i,
+    // input wire[`RegBus]         branch_target_address_i,
+
+    output reg[`InstAddrBus]    pc,
     output reg ce
 );
 
@@ -18,7 +24,7 @@ module pc_reg(
     always @ (posedge clk) begin
         if (ce == `ChipDisable) begin
             pc <= 32'h00000000;
-        end else begin
+        end else if (stall[0] == `NoStop)begin
             pc <= pc + 4'h4;
         end
     end
