@@ -34,9 +34,6 @@ module id (
     wire[6:0] opcode = inst_i[6:0];
     wire[2:0] funct3 = inst_i[14:12];
     wire[6:0] funct7 = inst_i[31:25];
-    // wire[4:0] op2 = inst_i[10:6];
-    // wire[5:0] op3 = inst_i[5:0];
-    // wire[4:0] op4 = inst_i[20:16];
 
     reg[`RegBus] imm;
 
@@ -67,107 +64,111 @@ module id (
             imm             <= `ZeroWord;
 
             case (opcode)
-                `RV_OP_IMM: begin // 立即数运算指令
+                `RV_OP_IMM: begin // I 类指令
+                    wreg_o      <=  `WriteEnable;
+                    reg1_read_o <=  1'b1;
+                    reg2_read_o <=  1'b0;
                     case (funct3)
                         `RV_OR: begin 
-                            wreg_o      <=  `WriteEnable;
                             aluop_o     <=  `EXE_OR_OP;
                             alusel_o    <=  `EXE_RES_LOGIC;
-                            reg1_read_o <=  1'b1;
-                            reg2_read_o <=  1'b0;
                             imm         <=  {{20{inst_i[31]}}, inst_i[31:20]}; // RISC-V 规定立即数最高位总是符号位
-                            instvalid   <=  `InstValid;
                         end
                         `RV_AND: begin 
-                            wreg_o      <=  `WriteEnable;
                             aluop_o     <=  `EXE_AND_OP;
                             alusel_o    <=  `EXE_RES_LOGIC;
-                            reg1_read_o <=  1'b1;
-                            reg2_read_o <=  1'b0;
                             imm         <=  {{20{inst_i[31]}}, inst_i[31:20]}; // RISC-V 规定立即数最高位总是符号位
                         end
                         `RV_XOR: begin 
-                            wreg_o      <=  `WriteEnable;
                             aluop_o     <=  `EXE_XOR_OP;
                             alusel_o    <=  `EXE_RES_LOGIC;
-                            reg1_read_o <=  1'b1;
-                            reg2_read_o <=  1'b0;
                             imm         <=  {{20{inst_i[31]}}, inst_i[31:20]}; // RISC-V 规定立即数最高位总是符号位
                         end
                         `RV_SLT: begin 
-                            wreg_o      <=  `WriteEnable;
                             aluop_o     <=  `EXE_SLT_OP;
                             alusel_o    <=  `EXE_RES_ARITHMETIC;
-                            reg1_read_o <=  1'b1;
-                            reg2_read_o <=  1'b0;
                             imm         <=  {{20{inst_i[31]}}, inst_i[31:20]}; // RISC-V 规定立即数最高位总是符号位
                         end
                         `RV_SLTU: begin 
-                            wreg_o      <=  `WriteEnable;
                             aluop_o     <=  `EXE_SLTU_OP;
                             alusel_o    <=  `EXE_RES_ARITHMETIC;
-                            reg1_read_o <=  1'b1;
-                            reg2_read_o <=  1'b0;
                             imm         <=  {{20{inst_i[31]}}, inst_i[31:20]}; // RISC-V 规定立即数最高位总是符号位
                         end
                         `RV_SLL: begin 
-                            wreg_o      <=  `WriteEnable;
                             aluop_o     <=  `EXE_SLL_OP;
                             alusel_o    <=  `EXE_RES_SHIFT;
-                            reg1_read_o <=  1'b1;
-                            reg2_read_o <=  1'b0;
                             imm[4:0]    <=  inst_i[24:20];  // shamt 字段
                         end
                         `RV_SRL_OR_SRA: begin           // SRL 和 SRA 的 opcode 是相同的
                             if (inst_i[30] == 0) begin  // imm[10] == 0，为 SRL 指令
-                                wreg_o      <=  `WriteEnable;
                                 aluop_o     <=  `EXE_SRL_OP;
                                 alusel_o    <=  `EXE_RES_SHIFT;
-                                reg1_read_o <=  1'b1;
-                                reg2_read_o <=  1'b0;
                                 imm[4:0]    <=  inst_i[24:20];  // shamt 字段
                             end else if (inst_i[30] == 1) begin // SRA 指令
-                                wreg_o      <=  `WriteEnable;
                                 aluop_o     <=  `EXE_SRA_OP;
                                 alusel_o    <=  `EXE_RES_SHIFT;
-                                reg1_read_o <=  1'b1;
-                                reg2_read_o <=  1'b0;
                                 imm[4:0]    <=  inst_i[24:20];  // shamt 字段
                             end
                         end
                         `RV_ADD_OR_SUB: begin 
-                            wreg_o      <=  `WriteEnable;
                             aluop_o     <=  `EXE_ADD_OP;
                             alusel_o    <=  `EXE_RES_ARITHMETIC;
-                            reg1_read_o <=  1'b1;
-                            reg2_read_o <=  1'b0;
                             imm         <=  {{20{inst_i[31]}}, inst_i[31:20]}; // RISC-V 规定立即数最高位总是符号位
                         end
                         default : /* default */;
                     endcase
                 end
-                `RV_OP: begin 
+                `RV_OP: begin // R 类指令
+                    wreg_o      <= `WriteEnable;
+                    reg1_read_o <= 1'b1;
+                    reg2_read_o <= 1'b1;
                     case (funct3)
                         `RV_OR: begin 
-                            wreg_o      <= `WriteEnable;
                             aluop_o     <= `EXE_OR_OP;
                             alusel_o    <= `EXE_RES_LOGIC;
-                            reg1_read_o <= 1'b1;
-                            reg2_read_o <= 1'b1;
-                            // instvalid   <= `InstValid;
                         end
                         `RV_AND: begin 
-                            wreg_o      <= `WriteEnable;
                             aluop_o     <= `EXE_AND_OP;
                             alusel_o    <= `EXE_RES_LOGIC;
-                            reg1_read_o <= 1'b1;
-                            reg2_read_o <= 1'b1;
                         end
-
+                        `RV_XOR: begin 
+                            aluop_o     <=  `EXE_XOR_OP;
+                            alusel_o    <=  `EXE_RES_LOGIC;
+                        end
+                        `RV_SLT: begin 
+                            aluop_o     <=  `EXE_SLT_OP;
+                            alusel_o    <=  `EXE_RES_ARITHMETIC;
+                        end
+                        `RV_SLTU: begin 
+                            aluop_o     <=  `EXE_SLTU_OP;
+                            alusel_o    <=  `EXE_RES_ARITHMETIC;
+                        end
+                        `RV_SLL: begin 
+                            aluop_o     <=  `EXE_SLL_OP;
+                            alusel_o    <=  `EXE_RES_SHIFT;
+                        end
+                        `RV_SRL_OR_SRA: begin           // SRL 和 SRA 的 opcode 是相同的
+                            if (inst_i[30] == 0) begin  // imm[10] == 0，为 SRL 指令
+                                aluop_o     <=  `EXE_SRL_OP;
+                                alusel_o    <=  `EXE_RES_SHIFT;
+                            end else if (inst_i[30] == 1) begin // SRA 指令
+                                aluop_o     <=  `EXE_SRA_OP;
+                                alusel_o    <=  `EXE_RES_SHIFT;
+                            end
+                        end
+                        `RV_ADD_OR_SUB: begin 
+                            if (inst_i[30] == 1'b0) begin // ADD
+                                aluop_o     <=  `EXE_ADD_OP;
+                                alusel_o    <=  `EXE_RES_ARITHMETIC;
+                            end else if (inst_i[30] == 1'b1) begin // SUB
+                                aluop_o     <=  `EXE_SUB_OP;
+                                alusel_o    <=  `EXE_RES_ARITHMETIC;
+                            end
+                        end
                         default : /* default */;
                     endcase
                 end
-                `RV_OP_LUI: begin 
+                `RV_OP_LUI: begin // LUI 指令
                     wreg_o      <=  `WriteEnable;
                     aluop_o     <=  `EXE_LUI_OP;
                     alusel_o    <=  `EXE_RES_LOGIC;
