@@ -18,6 +18,8 @@ module id (
     input wire[`RegBus]        mem_wdata_i,
     input wire[`RegAddrBus]    mem_wd_i,
 
+    input wire                 is_in_delayslot_i,
+
     output reg                 reg1_read_o,
     output reg                 reg2_read_o,
     output reg[`RegAddrBus]    reg1_addr_o,
@@ -29,7 +31,14 @@ module id (
     output reg[`RegBus]        reg2_o,
     output reg[`RegAddrBus]    wd_o,
     output reg                 wreg_o,
-    output wire                stallreq     // 占坑
+    output wire                stallreq,
+
+    output reg                 next_inst_in_delayslot_o,
+
+    output reg                 branch_flag_o,
+    output reg[`RegBus]        branch_target_address_o,
+    output reg[`RegBus]        link_addr_o,
+    output reg                 is_in_delayslot_o
 );
 
     wire[6:0] opcode = inst_i[6:0];
@@ -39,6 +48,22 @@ module id (
     reg[`RegBus] imm;
 
     reg instvalid;
+
+    wire[`RegBus] pc_plus_8;
+    wire[`RegBus] pc_plus_4;
+
+    wire[`RegBus] imm_sll2_signedext;
+    wire[19:0] offset_20;
+    wire[11:0] offset_12;
+    assign stallreq = `NoStop;
+
+    assign pc_plus_8 = pc_i + 8;
+    assign pc_plus_4 = pc_i + 4;
+
+    assign imm_sll2_signedext = {{14{inst_i[15]}}, inst_i[15:0], 2'b00};
+
+    assign offset_20 = inst_i[31:12]; // 实际的 RISC-V 指令要变换位置，这里简化便于调试
+    assign offset_12 = inst_i[31:20];
 
     always @(*) begin
         if (rst == `RstEnable) begin
@@ -51,7 +76,11 @@ module id (
             reg2_read_o     <= 1'b0;
             reg1_addr_o     <= `NOPRegAddr;
             reg2_addr_o     <= `NOPRegAddr;
-            imm             <= 32'h0;
+            imm             <= `ZeroWord;
+            link_addr_o     <= `ZeroWord;
+            branch_target_address_o     <= `ZeroWord;
+            branch_flag_o               <= `NotBranch;
+            next_inst_in_delayslot_o    <= `NotInDelaySlot;
         end else begin 
             aluop_o         <= `EXE_NOP_OP;
             alusel_o        <= `EXE_RES_NOP;
@@ -63,6 +92,10 @@ module id (
             reg1_addr_o     <= inst_i[19:15];   // rs1
             reg2_addr_o     <= inst_i[24:20];   // rs2
             imm             <= `ZeroWord;
+            link_addr_o     <= `ZeroWord;
+            branch_target_address_o     <= `ZeroWord;
+            branch_flag_o               <= `NotBranch;
+            next_inst_in_delayslot_o    <= `NotInDelaySlot;
 
             case (opcode)
                 `RV_OP_IMM: begin // I 类指令
@@ -188,6 +221,60 @@ module id (
                     reg2_read_o <=  1'b0;
                     imm         <=  {inst_i[31:12], 12'h0}; // 立即数作为高20位，低12位补0
                 end
+                `RV_OP_JAL: begin 
+                    wreg_o          <= `WriteEnable;
+                    aluop_o         <= `EXE_JAL_OP;
+                    alusel_o        <= `EXE_RES_JUMP_BRANCH;
+                    reg1_read_o     <= 1'b0;
+                    reg2_read_o     <= 1'b0;
+                    link_addr_o     <= pc_plus_8;
+                    branch_flag_o   <= `Branch;
+                    next_inst_in_delayslot_o    <= `InDelaySlot;
+                    branch_target_address_o     <= {{11{offset_20[19]}}, offset_20, 1'b0} + pc_i;
+                end
+                `RV_OP_JALR: begin 
+                    wreg_o          <= `WriteEnable;
+                    aluop_o         <= `EXE_JALR_OP;
+                    alusel_o        <= `EXE_RES_JUMP_BRANCH;
+                    reg1_read_o     <= 1'b1;
+                    reg2_read_o     <= 1'b0;
+                    link_addr_o     <= pc_plus_8;
+                    branch_flag_o   <= `Branch;
+                    next_inst_in_delayslot_o <= `InDelaySlot;
+                    branch_target_address_o     <= {{20{offset_12[11]}}, offset_12} + reg1_o;
+                end
+                `RV_OP_BRANCH: begin 
+                    case (funct3)
+                        3'b000: begin   // BEQ
+                            wreg_o      <= `WriteDisable;
+                            aluop_o     <= `EXE_BEQ_OP;
+                            alusel_o    <= `EXE_RES_JUMP_BRANCH;
+                            reg1_read_o <= 1'b1;
+                            reg2_read_o <= 1'b1;
+                            if (reg1_o == reg2_o) begin 
+                                branch_target_address_o     <= pc_plus_4 + imm_sll2_signedext;
+                                branch_flag_o               <= `Branch;
+                                next_inst_in_delayslot_o    <= `InDelaySlot;
+                            end
+                        end
+                        3'b001: begin   // BNE
+
+                        end
+                        3'b100: begin   // BLT
+
+                        end
+                        3'b101: begin   // BGE
+
+                        end
+                        3'b110: begin   // BLTU
+
+                        end
+                        3'b111: begin   // BGEU
+
+                        end
+                        default : /* default */;
+                    endcase
+                end
             endcase // case opcode
         end
     end // always
@@ -221,6 +308,14 @@ module id (
             reg2_o  <= imm;
         end else begin 
             reg2_o  <= `ZeroWord;
+        end
+    end
+
+    always @(*) begin 
+        if (rst == `RstEnable) begin 
+            is_in_delayslot_o <= `NotInDelaySlot;
+        end else begin 
+            is_in_delayslot_o <= is_in_delayslot_i;
         end
     end
 

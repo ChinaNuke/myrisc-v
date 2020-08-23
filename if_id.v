@@ -15,6 +15,7 @@ module if_id(
             id_pc <= `ZeroWord;
             id_inst <= `ZeroWord;
         end else if (stall[1] == `Stop && stall[2] == `NoStop) begin
+            // IF段暂停，ID段不暂停
             id_pc <= `ZeroWord;
             id_inst <= `ZeroWord;
         end else if (stall[1] == `NoStop) begin

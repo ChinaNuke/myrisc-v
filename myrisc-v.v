@@ -22,6 +22,8 @@ module mymips (
     wire                    id_wreg_o;
     wire[`RegAddrBus]       id_wd_o;
     wire                    id_stall_o;
+    wire                    id_is_in_delayslot_o;
+    wire[`RegBus]           id_link_address_o;
 
     // ID/EX --- EX
     wire[`AluOpBus]         ex_aluop_i;
@@ -30,6 +32,8 @@ module mymips (
     wire[`RegBus]           ex_reg2_i;
     wire                    ex_wreg_i;
     wire[`RegAddrBus]       ex_wd_i;
+    wire                    ex_is_in_delayslot_i;
+    wire[`RegBus]           ex_link_address_i;
 
     // EX --- EX/MEM
     wire                    ex_wreg_o;
@@ -63,9 +67,18 @@ module mymips (
     wire                    stallreq_from_id;
     wire                    stallreq_from_ex;
 
+    wire is_in_delayslot_i;
+    wire is_in_delayslot_o;
+    wire next_inst_in_delayslot_o;
+    wire id_branch_flag_o;
+    wire[`RegBus] branch_target_address;
+
     pc_reg pc_reg0(
-        .clk(clk), .rst(rst), .pc(pc), .ce(rom_ce_o),
-        .stall(stall)
+        .clk(clk), .rst(rst), 
+        .branch_flag_i(id_branch_flag_o),
+        .branch_target_address_i(branch_target_address),
+        .stall(stall),
+        .pc(pc), .ce(rom_ce_o)
     );
 
     assign rom_addr_o = pc;
@@ -87,6 +100,8 @@ module mymips (
         // 访存阶段数据前推
         .mem_wreg_i(mem_wreg_o), .mem_wdata_i(mem_wdata_o), .mem_wd_i(mem_wd_o),
 
+        .is_in_delayslot_i(is_in_delayslot_i),
+
         .reg1_addr_o(reg1_addr), .reg2_addr_o(reg2_addr),
         .reg1_read_o(reg1_read), .reg2_read_o(reg2_read),
 
@@ -94,7 +109,14 @@ module mymips (
         .reg1_o(id_reg1_o), .reg2_o(id_reg2_o),
         .wd_o(id_wd_o), .wreg_o(id_wreg_o),
 
-        .stallreq(stallreq_from_id)
+        .stallreq(stallreq_from_id),
+
+        .next_inst_in_delayslot_o(next_inst_in_delayslot_o), 
+        .branch_flag_o(id_branch_flag_o), 
+        .branch_target_address_o(branch_target_address),
+        .link_addr_o(id_link_address_o),
+        .is_in_delayslot_o(id_is_in_delayslot_o)
+
     );
 
     regfile regfile1(
@@ -112,10 +134,16 @@ module mymips (
         .id_aluop(id_aluop_o), .id_alusel(id_alusel_o),
         .id_reg1(id_reg1_o), .id_reg2(id_reg2_o),
         .id_wd(id_wd_o), .id_wreg(id_wreg_o),
+        .id_link_address(id_link_address_o),
+        .id_is_in_delayslot(id_is_in_delayslot_o),
+        .next_inst_in_delayslot_i(),
 
         .ex_aluop(ex_aluop_i), .ex_alusel(ex_alusel_i),
         .ex_reg1(ex_reg1_i), .ex_reg2(ex_reg2_i),
-        .ex_wd(ex_wd_i), .ex_wreg(ex_wreg_i)
+        .ex_wd(ex_wd_i), .ex_wreg(ex_wreg_i),
+        .ex_link_address(ex_link_address_i),
+        .ex_is_in_delayslot(ex_is_in_delayslot_i),
+        .is_in_delayslot_o(is_in_delayslot_i)
     );
 
     ex ex0(
@@ -124,6 +152,8 @@ module mymips (
         .aluop_i(ex_aluop_i), .alusel_i(ex_alusel_i),
         .reg1_i(ex_reg1_i), .reg2_i(ex_reg2_i),
         .wd_i(ex_wd_i), .wreg_i(ex_wreg_i),
+        .link_address_i(ex_link_address_i),
+        .is_in_delayslot_i(ex_is_in_delayslot_i),
 
         .wd_o(ex_wd_o), .wreg_o(ex_wreg_o), .wdata_o(ex_wdata_o),
 
