@@ -15,7 +15,7 @@ module mymips_min_sopc_tb ();
     initial begin 
         rst = `RstEnable;
         #195 rst = `RstDisable;
-        #1000 $stop;
+        #2000 $stop;
     end
 
     mymips_min_sopc mymips_min_sopc0(

@@ -51,19 +51,22 @@ module id (
 
     wire[`RegBus] pc_plus_8;
     wire[`RegBus] pc_plus_4;
+    wire[`RegBus] reg1_sub_reg2;
 
-    wire[`RegBus] imm_sll2_signedext;
     wire[19:0] offset_20;
-    wire[11:0] offset_12;
+    wire[11:0] jmp_offset_12;
+    wire[11:0] branch_offset_12;
+
     assign stallreq = `NoStop;
 
     assign pc_plus_8 = pc_i + 8;
     assign pc_plus_4 = pc_i + 4;
+    assign reg1_sub_reg2 = reg1_o + (~reg2_o + 1);
 
-    assign imm_sll2_signedext = {{14{inst_i[15]}}, inst_i[15:0], 2'b00};
+    assign offset_20 = {inst_i[31], inst_i[19:12], inst_i[20], inst_i[30:21]};
+    assign jmp_offset_12 = inst_i[31:20];
+    assign branch_offset_12 = {inst_i[31], inst_i[7], inst_i[30:25], inst_i[11:8]};
 
-    assign offset_20 = inst_i[31:12]; // 实际的 RISC-V 指令要变换位置，这里简化便于调试
-    assign offset_12 = inst_i[31:20];
 
     always @(*) begin
         if (rst == `RstEnable) begin
@@ -223,7 +226,7 @@ module id (
                 end
                 `RV_OP_JAL: begin 
                     wreg_o          <= `WriteEnable;
-                    aluop_o         <= `EXE_JAL_OP;
+                    // aluop_o         <= `EXE_JAL_OP;
                     alusel_o        <= `EXE_RES_JUMP_BRANCH;
                     reg1_read_o     <= 1'b0;
                     reg2_read_o     <= 1'b0;
@@ -234,43 +237,92 @@ module id (
                 end
                 `RV_OP_JALR: begin 
                     wreg_o          <= `WriteEnable;
-                    aluop_o         <= `EXE_JALR_OP;
+                    // aluop_o         <= `EXE_JALR_OP;
                     alusel_o        <= `EXE_RES_JUMP_BRANCH;
                     reg1_read_o     <= 1'b1;
                     reg2_read_o     <= 1'b0;
                     link_addr_o     <= pc_plus_8;
                     branch_flag_o   <= `Branch;
                     next_inst_in_delayslot_o <= `InDelaySlot;
-                    branch_target_address_o     <= {{20{offset_12[11]}}, offset_12} + reg1_o;
+                    branch_target_address_o     <= {{20{jmp_offset_12[11]}}, jmp_offset_12} + reg1_o;
                 end
                 `RV_OP_BRANCH: begin 
                     case (funct3)
                         3'b000: begin   // BEQ
                             wreg_o      <= `WriteDisable;
-                            aluop_o     <= `EXE_BEQ_OP;
+                            // aluop_o     <= `EXE_BEQ_OP;
                             alusel_o    <= `EXE_RES_JUMP_BRANCH;
                             reg1_read_o <= 1'b1;
                             reg2_read_o <= 1'b1;
                             if (reg1_o == reg2_o) begin 
-                                branch_target_address_o     <= pc_plus_4 + imm_sll2_signedext;
+                                branch_target_address_o     <= {{19{branch_offset_12[11]}}, branch_offset_12, 1'b0} + pc_i;
                                 branch_flag_o               <= `Branch;
                                 next_inst_in_delayslot_o    <= `InDelaySlot;
                             end
                         end
                         3'b001: begin   // BNE
-
+                            wreg_o      <= `WriteDisable;
+                            // aluop_o     <= `EXE_BEQ_OP;
+                            alusel_o    <= `EXE_RES_JUMP_BRANCH;
+                            reg1_read_o <= 1'b1;
+                            reg2_read_o <= 1'b1;
+                            if (reg1_o != reg2_o) begin 
+                                branch_target_address_o     <= {{19{branch_offset_12[11]}}, branch_offset_12, 1'b0} + pc_i;
+                                branch_flag_o               <= `Branch;
+                                next_inst_in_delayslot_o    <= `InDelaySlot;
+                            end
                         end
                         3'b100: begin   // BLT
-
+                            wreg_o      <= `WriteDisable;
+                            // aluop_o     <= `EXE_BEQ_OP;
+                            alusel_o    <= `EXE_RES_JUMP_BRANCH;
+                            reg1_read_o <= 1'b1;
+                            reg2_read_o <= 1'b1;
+                            if (reg1_o[31] && !reg2_o[31] || 
+                                !reg1_o[31] && !reg2_o[31] && reg1_sub_reg2[31] || 
+                                reg1_o[31] && reg2_o[31] && reg1_sub_reg2[31]) begin 
+                                branch_target_address_o     <= {{19{branch_offset_12[11]}}, branch_offset_12, 1'b0} + pc_i;
+                                branch_flag_o               <= `Branch;
+                                next_inst_in_delayslot_o    <= `InDelaySlot;
+                            end
                         end
                         3'b101: begin   // BGE
-
+                            wreg_o      <= `WriteDisable;
+                            // aluop_o     <= `EXE_BEQ_OP;
+                            alusel_o    <= `EXE_RES_JUMP_BRANCH;
+                            reg1_read_o <= 1'b1;
+                            reg2_read_o <= 1'b1;
+                            if (!reg1_o[31] && reg2_o[31] || 
+                                reg1_o[31] && reg2_o[31] && !reg1_sub_reg2[31] || 
+                                !reg1_o[31] && !reg2_o[31] && !reg1_sub_reg2[31]) begin 
+                                branch_target_address_o     <= {{19{branch_offset_12[11]}}, branch_offset_12, 1'b0} + pc_i;
+                                branch_flag_o               <= `Branch;
+                                next_inst_in_delayslot_o    <= `InDelaySlot;
+                            end
                         end
                         3'b110: begin   // BLTU
-
+                            wreg_o      <= `WriteDisable;
+                            // aluop_o     <= `EXE_BEQ_OP;
+                            alusel_o    <= `EXE_RES_JUMP_BRANCH;
+                            reg1_read_o <= 1'b1;
+                            reg2_read_o <= 1'b1;
+                            if (reg1_o < reg2_o) begin 
+                                branch_target_address_o     <= {{19{branch_offset_12[11]}}, branch_offset_12, 1'b0} + pc_i;
+                                branch_flag_o               <= `Branch;
+                                next_inst_in_delayslot_o    <= `InDelaySlot;
+                            end
                         end
                         3'b111: begin   // BGEU
-
+                            wreg_o      <= `WriteDisable;
+                            // aluop_o     <= `EXE_BEQ_OP;
+                            alusel_o    <= `EXE_RES_JUMP_BRANCH;
+                            reg1_read_o <= 1'b1;
+                            reg2_read_o <= 1'b1;
+                            if (reg1_o > reg2_o) begin 
+                                branch_target_address_o     <= {{19{branch_offset_12[11]}}, branch_offset_12, 1'b0} + pc_i;
+                                branch_flag_o               <= `Branch;
+                                next_inst_in_delayslot_o    <= `InDelaySlot;
+                            end
                         end
                         default : /* default */;
                     endcase
