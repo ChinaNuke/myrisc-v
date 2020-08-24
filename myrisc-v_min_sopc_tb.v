@@ -2,7 +2,7 @@
 
 `timescale 1ns/1ps
 
-module mymips_min_sopc_tb ();
+module myriscv_min_sopc_tb ();
 
     reg CLOCK_50;
     reg rst;
@@ -18,7 +18,7 @@ module mymips_min_sopc_tb ();
         #2000 $stop;
     end
 
-    mymips_min_sopc mymips_min_sopc0(
+    myriscv_min_sopc myriscv_min_sopc0(
         .clk(CLOCK_50), .rst(rst)
     );
 

@@ -1,6 +1,6 @@
 `include "defines.v"
 
-module mymips_min_sopc (
+module myriscv_min_sopc (
     input wire clk,
     input wire rst
 );
