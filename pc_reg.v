@@ -6,8 +6,11 @@ module pc_reg(
 
     input wire[5:0] stall,
 
-    input wire                  branch_flag_i,
-    input wire[`RegBus]         branch_target_address_i,
+    input wire                  flush_i,
+    input wire[`RegBus]         flush_target_address_i,
+
+    input wire                  prdt_taken_i,
+    input wire[`RegBus]         prdt_target_address_i,
 
     output reg[`InstAddrBus]    pc,
     output reg                  ce
@@ -25,8 +28,10 @@ module pc_reg(
         if (ce == `ChipDisable) begin
             pc <= 32'h00000000;
         end else if (stall[0] == `NoStop)begin  // stall[0]为Stop时PC保持不变
-            if (branch_flag_i == `Branch) begin
-                pc <= branch_target_address_i;
+            if (flush_i == 1'b1) begin 
+                pc <= flush_target_address_i;
+            end else if (prdt_taken_i == `Branch) begin
+                pc <= prdt_target_address_i;
             end else begin 
                 pc <= pc + 4'h4;
             end

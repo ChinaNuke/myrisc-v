@@ -9,15 +9,21 @@ module ex (
     input wire[`RegBus]         reg2_i,
     input wire[`RegAddrBus]     wd_i,
     input wire                  wreg_i,
+    input wire[`InstAddrBus]    pc_i,
 
     input wire[`RegBus]         link_address_i,
-    input wire                  is_in_delayslot_i,
+    input wire[11:0]            branch_offset_12_i,
+
+    input wire                  prdt_taken,
 
     output reg[`RegAddrBus]     wd_o,
     output reg                  wreg_o,
     output reg[`RegBus]         wdata_o,
 
-    output reg                  stallreq
+    output reg                  stallreq,
+
+    output reg                  flush_o,
+    output reg[`RegBus]         flush_target_address_o
 );
 
     reg[`RegBus] logicout;      // 逻辑运算结果
@@ -31,8 +37,11 @@ module ex (
     wire[`RegBus]       result_sum;     // 加法结果
     wire[`RegBus]       opdata1_mult;   // 乘法中的被乘数
     wire[`RegBus]       opdata2_mult;   // 乘法中的乘数
-    wire[`DoubleRegBus] mulres_temp;      // 临时保存乘法结果
+    wire[`DoubleRegBus] mulres_temp;    // 临时保存乘法结果
     reg[`DoubleRegBus]  mulres;         // 保存乘法结果
+
+    wire                branch_taken;
+    // wire[`RegBus]       branch_offset = {{19{branch_offset_12_i[11]}}, branch_offset_12_i[11:0], 1'b0};
 
     // 进行逻辑运算
     always @(*) begin 
@@ -87,22 +96,18 @@ module ex (
     // 加减法处理
 
     // 注意：只有减法需要考虑补码，加法不需要考虑什么补码不补码的
-    assign reg2_i_mux = ((aluop_i == `EXE_SUB_OP) || (aluop_i == `EXE_SLT_OP)) ? 
+    assign reg2_i_mux = ((aluop_i == `EXE_SUB_OP) || (aluop_i == `EXE_SLT_OP) || (aluop_i == `EXE_BLT_OP) || (aluop_i == `EXE_BGE_OP)) ? 
                         (~reg2_i) + 1 : reg2_i;
 
-    // 一步到位，实现了加、减以及比较运算，妙啊！
+    // 一步到位，实现了加、减以及比较运算
     assign result_sum = reg1_i + reg2_i_mux;
 
-    // RISC-V 不判断溢出
-    // 判断溢出
-    // 溢出情况两种：1 正数之和结果为负数；2 负数之和结果为正数
-    // assign ov_sum = (reg1_i[31] && reg2_i_mux[31] && !result_sum[31]) || (!reg1_i[31] && !reg2_i_mux[31] && result_sum[31]);
-
-    // less than
-    assign reg1_lt_reg2 = (aluop_i == `EXE_SLT_OP) ? 
+    assign reg1_lt_reg2 = (aluop_i == `EXE_SLT_OP || aluop_i == `EXE_BLT_OP || aluop_i == `EXE_BGE_OP) ? 
                                     ((reg1_i[31] && !reg2_i[31]) || 
                                     (!reg1_i[31] && !reg2_i[31] && result_sum[31]) || 
                                     (reg1_i[31] && reg2_i[31] && result_sum[31])) : (reg1_i < reg2_i);
+
+    assign reg1_eq_reg2 = (reg1_i == reg2_i);
 
     assign reg1_i_not = ~reg1_i;
 
@@ -149,6 +154,28 @@ module ex (
         end else begin 
             // 无符号乘法
             mulres <= mulres_temp;
+        end
+    end
+
+    // 此处判断分支是否真正taken
+    assign branch_taken = (aluop_i == `EXE_BEQ_OP && reg1_eq_reg2) || (aluop_i == `EXE_BNE_OP && !reg1_eq_reg2) ||
+                          ((aluop_i == `EXE_BLT_OP || aluop_i == `EXE_BLTU_OP) && reg1_lt_reg2) || 
+                          ((aluop_i == `EXE_BGE_OP || aluop_i == `EXE_BGEU_OP) && !reg1_lt_reg2);
+
+    // 此处有两种需要冲刷流水线的情况：
+    // 1. IF段预测不跳但是实际要跳，这种情况要把分支目标地址送入PC
+    // 2. IF段预测跳但是实际不跳，这种情况要把链接地址送入PC
+    always @(*) begin 
+        if (alusel_i == `EXE_RES_JUMP_BRANCH && prdt_taken && !branch_taken) begin
+            flush_o             <= 1'b1;
+            flush_target_address_o    <= link_address_i;
+        end else if (alusel_i == `EXE_RES_JUMP_BRANCH && !prdt_taken && branch_taken) begin
+            flush_o             <= 1'b1;
+            flush_target_address_o    <= {{19{branch_offset_12_i[11]}}, branch_offset_12_i[11:0], 1'b0} + pc_i;
+            // flush_target_address_o  <= pc_i + branch_offset;
+        end else begin 
+            flush_o             <= 1'b0;
+            flush_target_address_o    <= `ZeroWord;
         end
     end
 

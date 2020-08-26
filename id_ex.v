@@ -3,6 +3,7 @@
 module id_ex (
     input wire      clk,
     input wire      rst,
+    input wire      flush,
 
     input wire[`AluOpBus]   id_aluop,
     input wire[`AluSelBus]  id_alusel,
@@ -13,8 +14,11 @@ module id_ex (
     input wire[5:0]         stall,
 
     input wire[`RegBus]     id_link_address,
-    input wire              id_is_in_delayslot,
-    input wire              next_inst_in_delayslot_i,
+    input wire              id_prdt_taken,
+
+    input wire[11:0]        id_branch_offset_12,
+
+    input wire[`InstAddrBus]    id_pc,
 
     output reg[`AluOpBus]   ex_aluop,
     output reg[`AluSelBus]  ex_alusel,
@@ -24,12 +28,15 @@ module id_ex (
     output reg              ex_wreg,
 
     output reg[`RegBus]     ex_link_address,
-    output reg              ex_is_in_delayslot,
-    output reg              is_in_delayslot_o
+    output reg              ex_prdt_taken,
+
+    output reg[11:0]        ex_branch_offset_12,
+
+    output reg[`InstAddrBus]    ex_pc
 );
 
     always @(posedge clk) begin 
-        if (rst == `RstEnable) begin 
+        if (rst == `RstEnable || flush == 1'b1) begin 
             ex_aluop    <=  `EXE_NOP_OP;
             ex_alusel   <=  `EXE_RES_NOP;
             ex_reg1     <=  `ZeroWord;
@@ -37,8 +44,9 @@ module id_ex (
             ex_wd       <=  `NOPRegAddr;
             ex_wreg     <=  `WriteDisable;
             ex_link_address     <= `ZeroWord;
-            ex_is_in_delayslot  <= `NotInDelaySlot;
-            is_in_delayslot_o   <= `NotInDelaySlot;
+            ex_prdt_taken       <= 1'b0;
+            ex_branch_offset_12 <= 12'b0;
+            ex_pc       <= `ZeroWord;
         end else if (stall[2] == `Stop && stall[3] == `NoStop) begin
             // ID暂停，EX不暂停
             ex_aluop    <=  `EXE_NOP_OP;
@@ -48,7 +56,9 @@ module id_ex (
             ex_wd       <=  `NOPRegAddr;
             ex_wreg     <=  `WriteDisable;
             ex_link_address     <= `ZeroWord;
-            ex_is_in_delayslot  <= `NotInDelaySlot;
+            ex_prdt_taken       <= 1'b0;
+            ex_branch_offset_12 <= 12'b0;
+            ex_pc       <= `ZeroWord;
         end else if(stall[2] == `NoStop) begin 
             // ID不暂停
             ex_aluop    <=  id_aluop;
@@ -58,8 +68,9 @@ module id_ex (
             ex_wd       <=  id_wd;
             ex_wreg     <=  id_wreg;
             ex_link_address     <= id_link_address;
-            ex_is_in_delayslot  <= id_is_in_delayslot;
-            is_in_delayslot_o   <= next_inst_in_delayslot_i;
+            ex_prdt_taken       <= id_prdt_taken;
+            ex_branch_offset_12 <= id_branch_offset_12;
+            ex_pc       <= id_pc;
         end
     end
 

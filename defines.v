@@ -43,47 +43,37 @@
 `define RV_AND 3'b111
 
 //指令
-`define EXE_AND  6'b100100
-`define EXE_OR   6'b100101
-`define EXE_XOR 6'b100110
-`define EXE_NOR 6'b100111
-`define EXE_ANDI 6'b001100
-`define EXE_ORI  6'b001101
-`define EXE_XORI 6'b001110
-`define EXE_LUI 6'b001111
+// `define EXE_AND  6'b100100
+// `define EXE_OR   6'b100101
+// `define EXE_XOR 6'b100110
+// `define EXE_NOR 6'b100111
+// `define EXE_ANDI 6'b001100
+// `define EXE_ORI  6'b001101
+// `define EXE_XORI 6'b001110
+// `define EXE_LUI 6'b001111
 
-`define EXE_SLL  6'b000000
-`define EXE_SLLV  6'b000100
-`define EXE_SRL  6'b000010
-`define EXE_SRLV  6'b000110
-`define EXE_SRA  6'b000011
-`define EXE_SRAV  6'b000111
-`define EXE_SYNC  6'b001111
-`define EXE_PREF  6'b110011
+// `define EXE_SLL  6'b000000
+// `define EXE_SLLV  6'b000100
+// `define EXE_SRL  6'b000010
+// `define EXE_SRLV  6'b000110
+// `define EXE_SRA  6'b000011
+// `define EXE_SRAV  6'b000111
+// `define EXE_SYNC  6'b001111
+// `define EXE_PREF  6'b110011
 
-`define EXE_MOVZ  6'b001010
-`define EXE_MOVN  6'b001011
-`define EXE_MFHI  6'b010000
-`define EXE_MTHI  6'b010001
-`define EXE_MFLO  6'b010010
-`define EXE_MTLO  6'b010011
+// `define EXE_SLT  6'b101010
+// `define EXE_SLTU  6'b101011
+// `define EXE_SLTI  6'b001010
+// `define EXE_SLTIU  6'b001011   
+// `define EXE_ADD  6'b100000
+// `define EXE_ADDU  6'b100001
+// `define EXE_SUB  6'b100010
+// `define EXE_SUBU  6'b100011
+// `define EXE_ADDI  6'b001000
+// `define EXE_ADDIU  6'b001001
+// `define EXE_CLZ  6'b100000
+// `define EXE_CLO  6'b100001
 
-`define EXE_SLT  6'b101010
-`define EXE_SLTU  6'b101011
-`define EXE_SLTI  6'b001010
-`define EXE_SLTIU  6'b001011   
-`define EXE_ADD  6'b100000
-`define EXE_ADDU  6'b100001
-`define EXE_SUB  6'b100010
-`define EXE_SUBU  6'b100011
-`define EXE_ADDI  6'b001000
-`define EXE_ADDIU  6'b001001
-`define EXE_CLZ  6'b100000
-`define EXE_CLO  6'b100001
-
-`define EXE_MULTU  6'b011001
-`define EXE_MUL  6'b000010
-// `define EXE_MULH  6'b011000
 
 `define EXE_J  6'b000010
 `define RV_JAL  6'b000011
@@ -101,9 +91,9 @@
 `define EXE_NOP 6'b000000
 `define SSNOP 32'b00000000000000000000000001000000
 
-`define EXE_SPECIAL_INST 6'b000000
-`define EXE_REGIMM_INST 6'b000001
-`define EXE_SPECIAL2_INST 6'b011100
+// `define EXE_SPECIAL_INST 6'b000000
+// `define EXE_REGIMM_INST 6'b000001
+// `define EXE_SPECIAL2_INST 6'b011100
 
 //AluOp
 `define EXE_AND_OP   8'b00100100
@@ -132,18 +122,18 @@
 `define EXE_MSUB_OP  8'b10101010
 `define EXE_MSUBU_OP  8'b10101011
 
-`define EXE_J_OP  8'b01001111
+// `define EXE_J_OP  8'b01001111
 `define EXE_JAL_OP  8'b01010000
 `define EXE_JALR_OP  8'b00001001
-`define EXE_JR_OP  8'b00001000
+// `define EXE_JR_OP  8'b00001000
 `define EXE_BEQ_OP  8'b01010001
-`define EXE_BGEZ_OP  8'b01000001
-`define EXE_BGEZAL_OP  8'b01001011
-`define EXE_BGTZ_OP  8'b01010100
-`define EXE_BLEZ_OP  8'b01010011
-`define EXE_BLTZ_OP  8'b01000000
-`define EXE_BLTZAL_OP  8'b01001010
 `define EXE_BNE_OP  8'b01010010
+// `define EXE_BNE_OP  8'b01000001
+`define EXE_BGE_OP  8'b01001011
+`define EXE_BGEU_OP  8'b01010100
+// `define EXE_BLEZ_OP  8'b01010011
+`define EXE_BLT_OP  8'b01000000
+`define EXE_BLTU_OP  8'b01001010
 
 `define EXE_NOP_OP    8'b00000000
 

@@ -9,7 +9,7 @@ module myriscv_min_sopc (
     wire[`InstBus]      inst;
     wire                rom_ce;
 
-    mymips mymips0(
+    mymips myriscv0(
         .clk(clk), .rst(rst),
         .rom_addr_o(inst_addr), .rom_data_i(inst),
         .rom_ce_o(rom_ce)
