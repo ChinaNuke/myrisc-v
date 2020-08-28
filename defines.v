@@ -33,6 +33,8 @@
 `define RV_OP_BRANCH 7'b1100011
 `define RV_OP_JAL 7'b1101111
 `define RV_OP_JALR 7'b1100111
+`define RV_OP_LOAD 7'b0000011
+`define RV_OP_STORE 7'b0100011
 `define RV_ADD_OR_SUB 3'b000
 `define RV_SLL 3'b001
 `define RV_SLT 3'b010
@@ -41,59 +43,6 @@
 `define RV_SRL_OR_SRA 3'b101
 `define RV_OR 3'b110
 `define RV_AND 3'b111
-
-//指令
-// `define EXE_AND  6'b100100
-// `define EXE_OR   6'b100101
-// `define EXE_XOR 6'b100110
-// `define EXE_NOR 6'b100111
-// `define EXE_ANDI 6'b001100
-// `define EXE_ORI  6'b001101
-// `define EXE_XORI 6'b001110
-// `define EXE_LUI 6'b001111
-
-// `define EXE_SLL  6'b000000
-// `define EXE_SLLV  6'b000100
-// `define EXE_SRL  6'b000010
-// `define EXE_SRLV  6'b000110
-// `define EXE_SRA  6'b000011
-// `define EXE_SRAV  6'b000111
-// `define EXE_SYNC  6'b001111
-// `define EXE_PREF  6'b110011
-
-// `define EXE_SLT  6'b101010
-// `define EXE_SLTU  6'b101011
-// `define EXE_SLTI  6'b001010
-// `define EXE_SLTIU  6'b001011   
-// `define EXE_ADD  6'b100000
-// `define EXE_ADDU  6'b100001
-// `define EXE_SUB  6'b100010
-// `define EXE_SUBU  6'b100011
-// `define EXE_ADDI  6'b001000
-// `define EXE_ADDIU  6'b001001
-// `define EXE_CLZ  6'b100000
-// `define EXE_CLO  6'b100001
-
-
-`define EXE_J  6'b000010
-`define RV_JAL  6'b000011
-`define RV_JALR  6'b001001
-`define EXE_JR  6'b001000
-`define EXE_BEQ  6'b000100
-`define EXE_BGEZ  5'b00001
-`define EXE_BGEZAL  5'b10001
-`define EXE_BGTZ  6'b000111
-`define EXE_BLEZ  6'b000110
-`define EXE_BLTZ  5'b00000
-`define EXE_BLTZAL  5'b10000
-`define EXE_BNE  6'b000101
-
-`define EXE_NOP 6'b000000
-`define SSNOP 32'b00000000000000000000000001000000
-
-// `define EXE_SPECIAL_INST 6'b000000
-// `define EXE_REGIMM_INST 6'b000001
-// `define EXE_SPECIAL2_INST 6'b011100
 
 //AluOp
 `define EXE_AND_OP   8'b00100100
@@ -135,6 +84,15 @@
 `define EXE_BLT_OP  8'b01000000
 `define EXE_BLTU_OP  8'b01001010
 
+`define EXE_LB_OP  8'b11100000
+`define EXE_LBU_OP  8'b11100100
+`define EXE_LH_OP  8'b11100001
+`define EXE_LHU_OP  8'b11100101
+`define EXE_LW_OP  8'b11100011
+`define EXE_SB_OP  8'b11101000
+`define EXE_SH_OP  8'b11101001
+`define EXE_SW_OP  8'b11101011
+
 `define EXE_NOP_OP    8'b00000000
 
 //AluSel
@@ -144,6 +102,7 @@
 `define EXE_RES_MUL 3'b101
 `define EXE_RES_MULH 3'b011
 `define EXE_RES_JUMP_BRANCH 3'b110
+`define EXE_RES_LOAD_STORE 3'b111
 
 `define EXE_RES_NOP 3'b000
 
@@ -154,6 +113,12 @@
 `define InstMemNum 131071
 `define InstMemNumLog2 17
 
+//数据存储器data_ram
+`define DataAddrBus 31:0
+`define DataBus 31:0
+`define DataMemNum 131071
+`define DataMemNumLog2 17
+`define ByteWidth 7:0
 
 //通用寄存器regfile
 `define RegAddrBus 4:0

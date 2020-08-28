@@ -6,7 +6,14 @@ module myriscv (
 
     input wire[`RegBus]     rom_data_i,
     output wire[`RegBus]    rom_addr_o,
-    output wire             rom_ce_o
+    output wire             rom_ce_o,
+
+    input wire[`RegBus]     ram_data_i,
+    output wire[`RegBus]    ram_addr_o,
+    output wire[`RegBus]    ram_data_o,
+    output wire             ram_we_o,
+    output wire[3:0]        ram_sel_o,
+    output wire             ram_ce_o
 );
     
     wire[`InstAddrBus]      pc;
@@ -33,7 +40,8 @@ module myriscv (
     wire[`RegBus]           id_link_address_o;
     wire[11:0]              id_branch_offset_12_o;
     wire                    id_prdt_taken_o;
-    wire[`InstBus]          id_pc_o;
+    wire[`InstAddrBus]      id_pc_o;
+    wire[`InstBus]          id_inst_o;
 
     // ID/EX --- EX
     wire[`AluOpBus]         ex_aluop_i;
@@ -45,7 +53,8 @@ module myriscv (
     wire[`RegBus]           ex_link_address_i;
     wire[11:0]              ex_branch_offset_12_i;
     wire                    ex_prdt_taken_i;
-    wire[`InstBus]          ex_pc_i;
+    wire[`InstAddrBus]      ex_pc_i;
+    wire[`InstBus]          ex_inst_i;
 
     // EX --- EX/MEM
     wire                    ex_wreg_o;
@@ -55,10 +64,17 @@ module myriscv (
     wire                    ex_flush_o;
     wire[`RegBus]           ex_flush_target_address_o;
 
+    wire[`AluOpBus]         ex_aluop_o;
+    wire[`RegBus]           ex_mem_addr_o;
+    wire[`RegBus]           ex_reg2_o;
+
     // EX/MEM -- MEM
     wire                    mem_wreg_i;
     wire[`RegAddrBus]       mem_wd_i;
     wire[`RegBus]           mem_wdata_i;
+    wire[`AluOpBus]         mem_aluop_i;
+    wire[`RegBus]           mem_mem_addr_i;
+    wire[`RegBus]           mem_reg2_i;
 
     // MEM -- MEM/WB
     wire                    mem_wreg_o;
@@ -156,7 +172,7 @@ module myriscv (
         .branch_offset_12_o(id_branch_offset_12_o),
         .prdt_taken_o(id_prdt_taken_o),
 
-        .pc_o(id_pc_o)
+        .pc_o(id_pc_o), .inst_o(id_inst_o)
 
     );
 
@@ -179,7 +195,7 @@ module myriscv (
         .id_link_address(id_link_address_o),
         .id_prdt_taken(id_prdt_taken_o),
         .id_branch_offset_12(id_branch_offset_12_o),
-        .id_pc(id_pc_o),
+        .id_pc(id_pc_o), .id_inst(id_inst_o),
 
         .ex_aluop(ex_aluop_i), .ex_alusel(ex_alusel_i),
         .ex_reg1(ex_reg1_i), .ex_reg2(ex_reg2_i),
@@ -187,7 +203,7 @@ module myriscv (
         .ex_link_address(ex_link_address_i),
         .ex_prdt_taken(ex_prdt_taken_i),
         .ex_branch_offset_12(ex_branch_offset_12_i),
-        .ex_pc(ex_pc_i)
+        .ex_pc(ex_pc_i), .ex_inst(ex_inst_i)
     );
 
     ex ex0(
@@ -199,13 +215,15 @@ module myriscv (
         .link_address_i(ex_link_address_i),
         .prdt_taken(ex_prdt_taken_i),
         .branch_offset_12_i(ex_branch_offset_12_i),
-        .pc_i(ex_pc_i),
+        .pc_i(ex_pc_i), .inst_i(ex_inst_i),
 
         .wd_o(ex_wd_o), .wreg_o(ex_wreg_o), .wdata_o(ex_wdata_o),
 
         .stallreq(stallreq_from_ex),
 
-        .flush_o(ex_flush_o), .flush_target_address_o(ex_flush_target_address_o)
+        .flush_o(ex_flush_o), .flush_target_address_o(ex_flush_target_address_o),
+
+        .aluop_o(ex_aluop_o), .mem_addr_o(ex_mem_addr_o), .reg2_o(ex_reg2_o)
     );
 
     ex_mem ex_mem0(
@@ -214,8 +232,10 @@ module myriscv (
         .stall(stall),
 
         .ex_wdata(ex_wdata_o), .ex_wd(ex_wd_o), .ex_wreg(ex_wreg_o),
+        .ex_aluop(ex_aluop_o), .ex_mem_addr(ex_mem_addr_o), .ex_reg2(ex_reg2_o),
 
-        .mem_wdata(mem_wdata_i), .mem_wd(mem_wd_i), .mem_wreg(mem_wreg_i)
+        .mem_wdata(mem_wdata_i), .mem_wd(mem_wd_i), .mem_wreg(mem_wreg_i),
+        .mem_aluop(mem_aluop_i), .mem_mem_addr(mem_mem_addr_i), .mem_reg2(mem_reg2_i)
     );
 
     mem mem0(
@@ -223,7 +243,14 @@ module myriscv (
 
         .wdata_i(mem_wdata_i), .wd_i(mem_wd_i), .wreg_i(mem_wreg_i),
 
-        .wdata_o(mem_wdata_o), .wd_o(mem_wd_o), .wreg_o(mem_wreg_o)
+        .aluop_i(mem_aluop_i), .mem_addr_i(mem_mem_addr_i), .reg2_i(mem_reg2_i),
+
+        .mem_data_i(ram_data_i),
+
+        .wdata_o(mem_wdata_o), .wd_o(mem_wd_o), .wreg_o(mem_wreg_o),
+
+        .mem_addr_o(ram_addr_o), .mem_we_o(ram_we_o), .mem_sel_o(ram_sel_o),
+        .mem_data_o(ram_data_o), .mem_ce_o(ram_ce_o)
     );
 
     mem_wb mem_wb0(

@@ -37,10 +37,12 @@ module id (
     output reg[11:0]           branch_offset_12_o,
 
     output wire                prdt_taken_o,
-    output wire[`InstAddrBus]  pc_o
+    output wire[`InstAddrBus]  pc_o,
+    output wire[`RegBus]       inst_o
 );
     assign prdt_taken_o = prdt_taken_i;
     assign pc_o = pc_i;
+    assign inst_o = inst_i;
 
     wire[6:0] opcode = inst_i[6:0];
     wire[2:0] funct3 = inst_i[14:12];
@@ -242,10 +244,6 @@ module id (
                             reg1_read_o <= 1'b1;
                             reg2_read_o <= 1'b1;
                             branch_offset_12_o  <= branch_offset_12;
-                            // if (reg1_o == reg2_o) begin 
-                            //     branch_target_address_o     <= {{19{branch_offset_12[11]}}, branch_offset_12, 1'b0} + pc_i;
-                            //     branch_flag_o               <= `Branch;
-                            // end
                         end
                         3'b001: begin   // BNE
                             wreg_o      <= `WriteDisable;
@@ -254,10 +252,6 @@ module id (
                             reg1_read_o <= 1'b1;
                             reg2_read_o <= 1'b1;
                             branch_offset_12_o  <= branch_offset_12;
-                            // if (reg1_o != reg2_o) begin 
-                            //     branch_target_address_o     <= {{19{branch_offset_12[11]}}, branch_offset_12, 1'b0} + pc_i;
-                            //     branch_flag_o               <= `Branch;
-                            // end
                         end
                         3'b100: begin   // BLT
                             wreg_o      <= `WriteDisable;
@@ -266,12 +260,6 @@ module id (
                             reg1_read_o <= 1'b1;
                             reg2_read_o <= 1'b1;
                             branch_offset_12_o  <= branch_offset_12;
-                            // if (reg1_o[31] && !reg2_o[31] || 
-                            //     !reg1_o[31] && !reg2_o[31] && reg1_sub_reg2[31] || 
-                            //     reg1_o[31] && reg2_o[31] && reg1_sub_reg2[31]) begin 
-                            //     branch_target_address_o     <= {{19{branch_offset_12[11]}}, branch_offset_12, 1'b0} + pc_i;
-                            //     branch_flag_o               <= `Branch;
-                            // end
                         end
                         3'b101: begin   // BGE
                             wreg_o      <= `WriteDisable;
@@ -280,12 +268,6 @@ module id (
                             reg1_read_o <= 1'b1;
                             reg2_read_o <= 1'b1;
                             branch_offset_12_o  <= branch_offset_12;
-                            // if (!reg1_o[31] && reg2_o[31] || 
-                            //     reg1_o[31] && reg2_o[31] && !reg1_sub_reg2[31] || 
-                            //     !reg1_o[31] && !reg2_o[31] && !reg1_sub_reg2[31]) begin 
-                            //     branch_target_address_o     <= {{19{branch_offset_12[11]}}, branch_offset_12, 1'b0} + pc_i;
-                            //     branch_flag_o               <= `Branch;
-                            // end
                         end
                         3'b110: begin   // BLTU
                             wreg_o      <= `WriteDisable;
@@ -294,10 +276,6 @@ module id (
                             reg1_read_o <= 1'b1;
                             reg2_read_o <= 1'b1;
                             branch_offset_12_o  <= branch_offset_12;
-                            // if (reg1_o < reg2_o) begin 
-                            //     branch_target_address_o     <= {{19{branch_offset_12[11]}}, branch_offset_12, 1'b0} + pc_i;
-                            //     branch_flag_o               <= `Branch;
-                            // end
                         end
                         3'b111: begin   // BGEU
                             wreg_o      <= `WriteDisable;
@@ -306,10 +284,72 @@ module id (
                             reg1_read_o <= 1'b1;
                             reg2_read_o <= 1'b1;
                             branch_offset_12_o  <= branch_offset_12;
-                            // if (reg1_o > reg2_o) begin 
-                            //     branch_target_address_o     <= {{19{branch_offset_12[11]}}, branch_offset_12, 1'b0} + pc_i;
-                            //     branch_flag_o               <= `Branch;
-                            // end
+                        end
+                        default : /* default */;
+                    endcase
+                end
+                `RV_OP_LOAD: begin 
+                    case (funct3)
+                        3'b000: begin // LB
+                            wreg_o      <= `WriteEnable;
+                            aluop_o     <= `EXE_LB_OP;
+                            alusel_o    <= `EXE_RES_LOAD_STORE;
+                            reg1_read_o <= 1'b1;
+                            reg2_read_o <= 1'b0;
+                        end
+                        3'b001: begin // LH
+                            wreg_o      <= `WriteEnable;
+                            aluop_o     <= `EXE_LH_OP;
+                            alusel_o    <= `EXE_RES_LOAD_STORE;
+                            reg1_read_o <= 1'b1;
+                            reg2_read_o <= 1'b0;
+                        end
+                        3'b010: begin // LW
+                            wreg_o      <= `WriteEnable;
+                            aluop_o     <= `EXE_LW_OP;
+                            alusel_o    <= `EXE_RES_LOAD_STORE;
+                            reg1_read_o <= 1'b1;
+                            reg2_read_o <= 1'b0;
+                        end
+                        3'b100: begin // LBU
+                            wreg_o      <= `WriteEnable;
+                            aluop_o     <= `EXE_LBU_OP;
+                            alusel_o    <= `EXE_RES_LOAD_STORE;
+                            reg1_read_o <= 1'b1;
+                            reg2_read_o <= 1'b0;
+                        end
+                        3'b101: begin // LHU
+                            wreg_o      <= `WriteEnable;
+                            aluop_o     <= `EXE_LHU_OP;
+                            alusel_o    <= `EXE_RES_LOAD_STORE;
+                            reg1_read_o <= 1'b1;
+                            reg2_read_o <= 1'b0;
+                        end
+                        default : /* default */;
+                    endcase // case funct3
+                end
+                `RV_OP_STORE: begin 
+                    case (funct3)
+                        3'b000: begin // SB
+                            wreg_o      <= `WriteDisable;
+                            aluop_o     <= `EXE_SB_OP;
+                            alusel_o    <= `EXE_RES_LOAD_STORE;
+                            reg1_read_o <= 1'b1;
+                            reg2_read_o <= 1'b1;
+                        end
+                        3'b001: begin // SH
+                            wreg_o      <= `WriteDisable;
+                            aluop_o     <= `EXE_SH_OP;
+                            alusel_o    <= `EXE_RES_LOAD_STORE;
+                            reg1_read_o <= 1'b1;
+                            reg2_read_o <= 1'b1;
+                        end
+                        3'b010: begin // SW
+                            wreg_o      <= `WriteDisable;
+                            aluop_o     <= `EXE_SW_OP;
+                            alusel_o    <= `EXE_RES_LOAD_STORE;
+                            reg1_read_o <= 1'b1;
+                            reg2_read_o <= 1'b1;
                         end
                         default : /* default */;
                     endcase

@@ -10,6 +10,7 @@ module ex (
     input wire[`RegAddrBus]     wd_i,
     input wire                  wreg_i,
     input wire[`InstAddrBus]    pc_i,
+    input wire[`RegBus]         inst_i,
 
     input wire[`RegBus]         link_address_i,
     input wire[11:0]            branch_offset_12_i,
@@ -23,8 +24,18 @@ module ex (
     output reg                  stallreq,
 
     output reg                  flush_o,
-    output reg[`RegBus]         flush_target_address_o
+    output reg[`RegBus]         flush_target_address_o,
+
+    output wire[`AluOpBus]      aluop_o,
+    output wire[`RegBus]        mem_addr_o,
+    output wire[`RegBus]        reg2_o
 );
+    assign aluop_o = aluop_i;
+    wire[`RegBus] offset = (aluop_i == `EXE_SB_OP || aluop_i == `EXE_SH_OP || aluop_i == `EXE_SW_OP) ? 
+                           ({{20{inst_i[31]}}, inst_i[31:25], inst_i[11:7]}) : 
+                           ({{20{inst_i[31]}}, inst_i[31:20]});
+    assign mem_addr_o = offset;
+    assign reg2_o = reg2_i;
 
     reg[`RegBus] logicout;      // 逻辑运算结果
     reg[`RegBus] shiftres;      // 移位运算结果

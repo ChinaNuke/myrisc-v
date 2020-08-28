@@ -19,6 +19,7 @@ module id_ex (
     input wire[11:0]        id_branch_offset_12,
 
     input wire[`InstAddrBus]    id_pc,
+    input wire[`RegBus]         id_inst,
 
     output reg[`AluOpBus]   ex_aluop,
     output reg[`AluSelBus]  ex_alusel,
@@ -32,7 +33,8 @@ module id_ex (
 
     output reg[11:0]        ex_branch_offset_12,
 
-    output reg[`InstAddrBus]    ex_pc
+    output reg[`InstAddrBus]    ex_pc,
+    output reg[`RegBus]         ex_inst
 );
 
     always @(posedge clk) begin 
@@ -47,6 +49,7 @@ module id_ex (
             ex_prdt_taken       <= 1'b0;
             ex_branch_offset_12 <= 12'b0;
             ex_pc       <= `ZeroWord;
+            ex_inst     <= `ZeroWord;
         end else if (stall[2] == `Stop && stall[3] == `NoStop) begin
             // ID暂停，EX不暂停
             ex_aluop    <=  `EXE_NOP_OP;
@@ -59,6 +62,7 @@ module id_ex (
             ex_prdt_taken       <= 1'b0;
             ex_branch_offset_12 <= 12'b0;
             ex_pc       <= `ZeroWord;
+            ex_inst     <= `ZeroWord;
         end else if(stall[2] == `NoStop) begin 
             // ID不暂停
             ex_aluop    <=  id_aluop;
@@ -71,6 +75,7 @@ module id_ex (
             ex_prdt_taken       <= id_prdt_taken;
             ex_branch_offset_12 <= id_branch_offset_12;
             ex_pc       <= id_pc;
+            ex_inst     <= id_inst;
         end
     end
 
